@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/kermanager/api"
-	"github.com/kermanager/third_party/database"
+	"kermesse-backend/api"
+	"kermesse-backend/third_party/database"
 )
 
 func main() {
