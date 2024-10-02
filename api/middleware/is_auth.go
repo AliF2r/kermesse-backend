@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func IsAuth(handlerFunc errors.ErrorHandler, usersRepository users.UsersRepository) errors.ErrorHandler {
+func IsAuth(handlerFunc errors.ErrorHandler, usersRepository users.UsersRepository, roles ...string) errors.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		token := r.Header.Get("Authorization")
 		if token == "" {
@@ -41,6 +41,22 @@ func IsAuth(handlerFunc errors.ErrorHandler, usersRepository users.UsersReposito
 		user, err := usersRepository.GetUserById(userId)
 		if err != nil {
 			return err
+		}
+
+		if len(roles) > 0 {
+			roleAllowed := false
+			for _, role := range roles {
+				if user.Role == role {
+					roleAllowed = true
+					break
+				}
+			}
+			if !roleAllowed {
+				return errors.CustomError{
+					Key: errors.Forbidden,
+					Err: goErrors.New("user does not have the required role"),
+				}
+			}
 		}
 
 		ctx := r.Context()
