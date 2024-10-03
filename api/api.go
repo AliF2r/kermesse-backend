@@ -7,6 +7,8 @@ import (
 	"github.com/kermesse-backend/internal/kermesses"
 	"github.com/kermesse-backend/internal/participations"
 	"github.com/kermesse-backend/internal/stands"
+	"github.com/kermesse-backend/internal/tickets"
+	"github.com/kermesse-backend/internal/tombolas"
 	"github.com/kermesse-backend/internal/users"
 	"log"
 	"net/http"
@@ -51,6 +53,16 @@ func (s *APIServer) Start() error {
 	participationService := participations.NewParticipationsService(userRepository, kermesseRepository, participationRepository, standRepository)
 	participationHandler := handler.NewParticipationsHandler(participationService, userRepository)
 	participationHandler.RegisterRoutes(router)
+
+	tombolaRepository := tombolas.NewTombolasRepository(s.db)
+	tombolaService := tombolas.NewTombolasService(tombolaRepository, kermesseRepository)
+	tombolaHandler := handler.NewTombolasHandler(tombolaService, userRepository)
+	tombolaHandler.RegisterRoutes(router)
+
+	ticketRepository := tickets.NewTicketsRepository(s.db)
+	ticketService := tickets.NewTicketsService(ticketRepository, tombolaRepository, userRepository)
+	ticketHandler := handler.NewTicketsHandler(ticketService, userRepository)
+	ticketHandler.RegisterRoutes(router)
 
 	log.Printf("🚀 Starting server on %s", s.address)
 	return http.ListenAndServe(s.address, router)

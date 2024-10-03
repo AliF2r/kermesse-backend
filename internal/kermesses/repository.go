@@ -13,6 +13,7 @@ type KermessesRepository interface {
 	CompleteKermesse(id int) error
 	IsStandLinkable(standId int) (bool, error)
 	LinkStandToKermesse(input map[string]interface{}) error
+	IsCompletionAllowed(id int) (bool, error)
 	LinkUserToKermesse(input map[string]interface{}) error
 }
 
@@ -54,15 +55,15 @@ func (repository *Repository) ModifyKermesse(id int, input map[string]interface{
 }
 
 func (repository *Repository) CompleteKermesse(id int) error {
-	query := "UPDATE kermesses SET status=$1 WHERE id=$2"
-	_, err := repository.db.Exec(query, types.KermesseStatusFinished, id)
+	query := "UPDATE kermesses SET status='FINISHED' WHERE id=$1"
+	_, err := repository.db.Exec(query, id)
 	return err
 }
 
 func (repository *Repository) IsStandLinkable(standId int) (bool, error) {
 	var canLink bool
-	query := `SELECT EXISTS ( SELECT 1 FROM kermesses_stands ks JOIN kermesses k ON ks.kermesse_id = k.id WHERE ks.stand_id = $1 AND k.status = $2 ) AS is_linkable`
-	err := repository.db.QueryRow(query, standId, types.KermesseStatusStarted).Scan(&canLink)
+	query := `SELECT EXISTS ( SELECT 1 FROM kermesses_stands ks JOIN kermesses k ON ks.kermesse_id = k.id WHERE ks.stand_id = $1 AND k.status = 'STARTED' ) AS is_linkable`
+	err := repository.db.QueryRow(query, standId).Scan(&canLink)
 	return !canLink, err
 }
 
@@ -70,6 +71,13 @@ func (repository *Repository) LinkStandToKermesse(input map[string]interface{}) 
 	query := "INSERT INTO kermesses_stands (kermesse_id, stand_id) VALUES ($1, $2)"
 	_, err := repository.db.Exec(query, input["kermesse_id"], input["stand_id"])
 	return err
+}
+
+func (r *Repository) IsCompletionAllowed(id int) (bool, error) {
+	var completionAllowed bool
+	query := "SELECT EXISTS ( SELECT 1 FROM tombolas WHERE kermesse_id = $1 AND status = 'STARTED' ) AS can_end"
+	err := r.db.QueryRow(query, id).Scan(&completionAllowed)
+	return !completionAllowed, err
 }
 
 func (repository *Repository) LinkUserToKermesse(input map[string]interface{}) error {

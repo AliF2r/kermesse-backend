@@ -148,6 +148,14 @@ func (service *Service) MarkKermesseAsComplete(ctx context.Context, id int) erro
 		}
 	}
 
+	canComplete, err := service.kermessesRepository.IsStandLinkable(id)
+	if err != nil || !canComplete {
+		return errors.CustomError{
+			Key: errors.BadRequest,
+			Err: goErrors.New("kermesse cannot be marked as complete because there is at least"),
+		}
+	}
+
 	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
 	if !ok {
 		return errors.CustomError{
