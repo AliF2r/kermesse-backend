@@ -1,8 +1,10 @@
 package kermesses
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/kermesse-backend/internal/types"
+	"strings"
 )
 
 type KermessesRepository interface {
@@ -15,6 +17,7 @@ type KermessesRepository interface {
 	LinkStandToKermesse(input map[string]interface{}) error
 	IsCompletionAllowed(id int) (bool, error)
 	LinkUserToKermesse(input map[string]interface{}) error
+	GetUsersForInvitation(kermesseId int) ([]types.UserBasic, error)
 }
 
 type Repository struct {
@@ -117,4 +120,24 @@ func (repository *Repository) LinkUserToKermesse(input map[string]interface{}) e
 	query := "INSERT INTO kermesses_users (kermesse_id, user_id) VALUES ($1, $2)"
 	_, err := repository.db.Exec(query, input["kermesse_id"], input["user_id"])
 	return err
+}
+
+func (repository *Repository) GetUsersForInvitation(kermesseId int) ([]types.UserBasic, error) {
+	var users []types.UserBasic
+	query := `
+		SELECT DISTINCT
+			u.id AS id,
+			u.name AS name,
+			u.email AS email,
+			u.balance AS balance,
+			u.role AS role
+		FROM users u
+		LEFT JOIN kermesses_users ku ON u.id = ku.user_id
+		WHERE u.id IS NOT NULL
+		AND u.role = 'STUDENT'
+		AND (ku.kermesse_id IS NULL OR ku.kermesse_id != $1)
+	`
+	err := repository.db.Select(&users, query, kermesseId)
+
+	return users, err
 }

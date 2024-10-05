@@ -18,6 +18,7 @@ type KermessesService interface {
 	MarkKermesseAsComplete(ctx context.Context, id int) error
 	AssignUserToKermesse(ctx context.Context, input map[string]interface{}) error
 	AssignStandToKermesse(ctx context.Context, input map[string]interface{}) error
+	GetUsersForInvitation(kermesseId int) ([]types.UserBasic, error)
 }
 
 type Service struct {
@@ -356,4 +357,15 @@ func (s *Service) AssignStandToKermesse(ctx context.Context, input map[string]in
 	}
 
 	return nil
+}
+
+func (service *Service) GetUsersForInvitation(id int) ([]types.UserBasic, error) {
+	users, err := service.kermessesRepository.GetUsersForInvitation(id)
+	if err != nil {
+		return nil, errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+	return users, nil
 }
