@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kermesse-backend/api/handler"
@@ -64,6 +65,18 @@ func (s *APIServer) Start() error {
 	ticketHandler := handler.NewTicketsHandler(ticketService, userRepository)
 	ticketHandler.RegisterRoutes(router)
 
+	cors := handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodOptions,
+		}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
+
 	log.Printf("🚀 Starting server on %s", s.address)
-	return http.ListenAndServe(s.address, router)
+	return http.ListenAndServe(s.address, cors(router))
 }
