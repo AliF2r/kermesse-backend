@@ -8,6 +8,7 @@ import (
 	"github.com/kermesse-backend/internal/users"
 	"github.com/kermesse-backend/pkg/errors"
 	"github.com/kermesse-backend/pkg/json"
+	"github.com/kermesse-backend/pkg/utils"
 	"net/http"
 	"strconv"
 )
@@ -32,7 +33,7 @@ func (handler *ParticipationsHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (handler *ParticipationsHandler) GetAllParticipations(w http.ResponseWriter, r *http.Request) error {
-	participations, err := handler.participationService.GetAllParticipations()
+	participations, err := handler.participationService.GetAllParticipations(r.Context(), utils.GetParams(r))
 	if err != nil {
 		return err
 	}

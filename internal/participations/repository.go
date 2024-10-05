@@ -1,13 +1,15 @@
 package participations
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/kermesse-backend/internal/types"
+	"strings"
 )
 
 type ParticipationsRepository interface {
-	GetAllParticipations() ([]types.Participation, error)
-	GetParticipationById(id int) (types.Participation, error)
+	GetAllParticipations(filters map[string]interface{}) ([]types.ParticipationUserStand, error)
+	GetParticipationById(id int) (types.ParticipationCompleteModel, error)
 	AddParticipation(input map[string]interface{}) error
 	UpdateParticipation(id int, input map[string]interface{}) error
 	IsEligibleForCreation(input map[string]interface{}) (bool, error)
@@ -23,15 +25,55 @@ func NewParticipationsRepository(db *sqlx.DB) *Repository {
 	}
 }
 
-func (repository *Repository) GetAllParticipations() ([]types.Participation, error) {
-	var participations []types.Participation
-	query := "SELECT * FROM participations"
-	err := repository.db.Select(&participations, query)
+func (repository *Repository) GetAllParticipations(filters map[string]interface{}) ([]types.ParticipationUserStand, error) {
+	var participations []types.ParticipationUserStand
+	baseQuery := `
+		SELECT DISTINCT
+			p.id AS id,
+			p.type AS type,
+			p.status AS status,
+			p.point AS point,
+			p.balance AS balance,
+			s.id AS "stand.id",
+			s.name AS "stand.name",
+			s.description AS "stand.description",
+			s.price AS "stand.price",
+			s.type AS "stand.type",
+			u.id AS "user.id",
+			u.name AS "user.name",
+			u.email AS "user.email",
+			u.role AS "user.role"
+		FROM participations p
+		JOIN users u ON i.user_id = u.id
+		JOIN stands s ON i.stand_id = s.id
+		WHERE 1=1
+	`
+
+	var conditions []string
+	if parentId, ok := filters["parent_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("(u.id = %v OR u.parent_id = %v)", parentId, parentId))
+	}
+	if studentId, ok := filters["student_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("u.id = %v", studentId))
+	}
+	if kermesseId, ok := filters["kermesse_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("p.kermesse_id = %v", kermesseId))
+	}
+	if standHolderId, ok := filters["stand_holder_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("s.user_id = %v", standHolderId))
+	}
+
+	if len(conditions) > 0 {
+		baseQuery += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	err := repository.db.Select(&participations, baseQuery)
+
 	return participations, err
 }
 
-func (repository *Repository) GetParticipationById(id int) (types.Participation, error) {
-	var participation types.Participation
+func (repository *Repository) GetParticipationById(id int) (types.ParticipationCompleteModel, error) {
+	var participation types.ParticipationCompleteModel
 	query := "SELECT * FROM participations WHERE id=$1"
 	err := repository.db.Get(&participation, query, id)
 	return participation, err

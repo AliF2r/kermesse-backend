@@ -14,8 +14,8 @@ import (
 )
 
 type ParticipationsService interface {
-	GetAllParticipations() ([]types.Participation, error)
-	GetParticipationById(id int) (types.Participation, error)
+	GetAllParticipations(ctx context.Context, params map[string]interface{}) ([]types.ParticipationUserStand, error)
+	GetParticipationById(id int) (types.ParticipationCompleteModel, error)
 	AddParticipation(ctx context.Context, input map[string]interface{}) error
 	ModifyParticipation(ctx context.Context, id int, input map[string]interface{}) error
 }
@@ -36,8 +36,38 @@ func NewParticipationsService(usersRepository users.UsersRepository, kermessesRe
 	}
 }
 
-func (service *Service) GetAllParticipations() ([]types.Participation, error) {
-	participations, err := service.participationsRepository.GetAllParticipations()
+func (service *Service) GetAllParticipations(ctx context.Context, params map[string]interface{}) ([]types.ParticipationUserStand, error) {
+	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user ID not found"),
+		}
+	}
+
+	userRole, ok := ctx.Value(types.UserRoleSessionKey).(string)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user role not found"),
+		}
+	}
+
+	filters := make(map[string]interface{})
+	switch userRole {
+	case types.UserRoleStudent:
+		filters["student_id"] = userId
+	case types.UserRoleParent:
+		filters["parent_id"] = userId
+	case types.UserRoleStandHolder:
+		filters["stand_holder_id"] = userId
+	}
+
+	if kermesseId, exists := params["kermesse_id"]; exists {
+		filters["kermesse_id"] = kermesseId
+	}
+
+	participations, err := service.participationsRepository.GetAllParticipations(filters)
 	if err != nil {
 		return nil, errors.CustomError{
 			Key: errors.InternalServerError,
@@ -47,7 +77,7 @@ func (service *Service) GetAllParticipations() ([]types.Participation, error) {
 	return participations, nil
 }
 
-func (service *Service) GetParticipationById(id int) (types.Participation, error) {
+func (service *Service) GetParticipationById(id int) (types.ParticipationCompleteModel, error) {
 	participation, err := service.participationsRepository.GetParticipationById(id)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
@@ -199,14 +229,14 @@ func (service *Service) ModifyParticipation(ctx context.Context, id int, input m
 		}
 	}
 
-	if participation.Category != types.ParticipationTypeGame {
+	if participation.Stand.Type != types.ParticipationTypeGame {
 		return errors.CustomError{
 			Key: errors.BadRequest,
 			Err: goErrors.New("participation type is not activity"),
 		}
 	}
 
-	kermesse, err := service.kermessesRepository.GetKermesseById(participation.KermesseId)
+	kermesse, err := service.kermessesRepository.GetKermesseById(participation.Kermesse.Id)
 	if err != nil || kermesse.Status == types.KermesseStatusFinished {
 		return errors.CustomError{
 			Key: errors.BadRequest,
@@ -214,7 +244,7 @@ func (service *Service) ModifyParticipation(ctx context.Context, id int, input m
 		}
 	}
 
-	stand, err := service.standsRepository.GetStandById(participation.StandId)
+	stand, err := service.standsRepository.GetStandById(participation.Stand.Id)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
 			return errors.CustomError{
