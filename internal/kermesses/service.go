@@ -11,7 +11,7 @@ import (
 )
 
 type KermessesService interface {
-	GetAllKermesses() ([]types.Kermesse, error)
+	GetAllKermesses(ctx context.Context) ([]types.Kermesse, error)
 	GetKermesseById(id int) (types.Kermesse, error)
 	AddKermesse(ctx context.Context, input map[string]interface{}) error
 	UpdateKermesse(ctx context.Context, id int, input map[string]interface{}) error
@@ -32,8 +32,37 @@ func NewKermessesService(kermessesRepository KermessesRepository, usersRepositor
 	}
 }
 
-func (service *Service) GetAllKermesses() ([]types.Kermesse, error) {
-	kermesses, err := service.kermessesRepository.GetAllKermesses()
+func (service *Service) GetAllKermesses(ctx context.Context) ([]types.Kermesse, error) {
+
+	userRole, ok := ctx.Value(types.UserRoleSessionKey).(string)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user role not found"),
+		}
+	}
+
+	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user Id not found"),
+		}
+	}
+
+	filters := make(map[string]interface{})
+	switch userRole {
+	case types.UserRoleStudent:
+		filters["student_id"] = userId
+	case types.UserRoleOrganizer:
+		filters["organizer_id"] = userId
+	case types.UserRoleStandHolder:
+		filters["stand_holder_id"] = userId
+	case types.UserRoleParent:
+		filters["parent_id"] = userId
+	}
+
+	kermesses, err := service.kermessesRepository.GetAllKermesses(filters)
 	if err != nil {
 		return nil, errors.CustomError{
 			Key: errors.InternalServerError,

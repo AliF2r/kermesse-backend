@@ -31,11 +31,12 @@ func (handler *KermessesHandler) RegisterRoutes(router *mux.Router) {
 	router.Handle("/kermesses/{id}", errors.ErrorHandler(middleware.IsAuth(handler.ModifyKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPatch)
 	router.Handle("/kermesses/{id}/complete", errors.ErrorHandler(middleware.IsAuth(handler.CompleteKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPatch)
 	router.Handle("/kermesses/{id}/add-user", errors.ErrorHandler(middleware.IsAuth(handler.AssignUserToKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPost)
+	router.Handle("/kermesses/{id}/users", errors.ErrorHandler(middleware.IsAuth(handler.GetUsersForInvitation, handler.usersRepository))).Methods(http.MethodGet)
 	router.Handle("/kermesses/{id}/add-stand", errors.ErrorHandler(middleware.IsAuth(handler.AssignStandToKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPost)
 }
 
 func (handler *KermessesHandler) GetAllKermesses(w http.ResponseWriter, r *http.Request) error {
-	kermesses, err := handler.kermessesService.GetAllKermesses()
+	kermesses, err := handler.kermessesService.GetAllKermesses(r.Context())
 	if err != nil {
 		return err
 	}
@@ -197,5 +198,30 @@ func (handler *KermessesHandler) AssignStandToKermesse(w http.ResponseWriter, r 
 			Err: err,
 		}
 	}
+	return nil
+}
+
+func (handler *KermessesHandler) GetUsersForInvitation(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
+	users, err := handler.kermessesService.GetUsersForInvitation(id)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Write(w, http.StatusOK, users); err != nil {
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
 	return nil
 }

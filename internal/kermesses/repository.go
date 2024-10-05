@@ -7,7 +7,7 @@ import (
 
 type KermessesRepository interface {
 	AddKermesse(input map[string]interface{}) error
-	GetAllKermesses() ([]types.Kermesse, error)
+	GetAllKermesses(filters map[string]interface{}) ([]types.Kermesse, error)
 	GetKermesseById(id int) (types.Kermesse, error)
 	ModifyKermesse(id int, input map[string]interface{}) error
 	CompleteKermesse(id int) error
@@ -33,10 +33,43 @@ func (repository *Repository) AddKermesse(input map[string]interface{}) error {
 	return err
 }
 
-func (repository *Repository) GetAllKermesses() ([]types.Kermesse, error) {
-	var kermesses []types.Kermesse
-	query := "SELECT * FROM kermesses"
-	err := repository.db.Select(&kermesses, query)
+func (repository *Repository) GetAllKermesses(filters map[string]interface{}) ([]types.Kermesse, error) {
+	kermesses := []types.Kermesse{}
+	baseQuery := `
+		SELECT DISTINCT
+			k.id AS id,
+			k.user_id AS user_id,
+			k.name AS name,
+			k.description AS description,
+			k.status AS status
+		FROM kermesses k
+		    FULL OUTER JOIN kermesses_stands ks ON ks.kermesse_id = k.id
+			FULL OUTER JOIN kermesses_users ku ON ku.kermesse_id = k.id
+			FULL OUTER JOIN stands s ON ks.stand_id = s.id
+			WHERE 1=1
+		`
+
+	var conditions []string
+
+	if studentId, ok := filters["student_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("ku.user_id = %v", studentId))
+	}
+	if organizerId, ok := filters["organizer_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("k.user_id = %v", organizerId))
+	}
+	if parentId, ok := filters["parent_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("ku.user_id = %v", parentId))
+	}
+	if standHolderId, ok := filters["stand_holder_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("ks.stand_id IS NOT NULL AND s.user_id = %v", standHolderId))
+	}
+
+	if len(conditions) > 0 {
+		baseQuery += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	err := repository.db.Select(&kermesses, baseQuery)
+
 	return kermesses, err
 }
 
@@ -73,10 +106,10 @@ func (repository *Repository) LinkStandToKermesse(input map[string]interface{}) 
 	return err
 }
 
-func (r *Repository) IsCompletionAllowed(id int) (bool, error) {
+func (repository *Repository) IsCompletionAllowed(id int) (bool, error) {
 	var completionAllowed bool
 	query := "SELECT EXISTS ( SELECT 1 FROM tombolas WHERE kermesse_id = $1 AND status = 'STARTED' ) AS can_end"
-	err := r.db.QueryRow(query, id).Scan(&completionAllowed)
+	err := repository.db.QueryRow(query, id).Scan(&completionAllowed)
 	return !completionAllowed, err
 }
 
