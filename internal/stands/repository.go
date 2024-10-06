@@ -13,6 +13,8 @@ type StandsRepository interface {
 	AddStand(input map[string]interface{}) error
 	ModifyStand(id int, input map[string]interface{}) error
 	AdjustStock(id int, quantity int) error
+	GetStandByUserId(userId int) (types.Stand, error)
+	UpdateStandByStandHolderId(userId int, input map[string]interface{}) error
 }
 
 type Repository struct {
@@ -87,8 +89,21 @@ func (repository *Repository) AdjustStock(id int, quantity int) error {
 	return err
 }
 
+func (repository *Repository) UpdateStandByStandHolderId(userId int, input map[string]interface{}) error {
+	query := "UPDATE stands SET name=$1, price=$2, stock=$3, description=$4 WHERE user_id=$5"
+	_, err := repository.db.Exec(query, input["name"], input["price"], input["stock"], input["description"], userId)
+	return err
+}
+
 func (repository *Repository) AddStand(input map[string]interface{}) error {
 	query := "INSERT INTO stands (user_id, name, description, category, price, stock) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err := repository.db.Exec(query, input["user_id"], input["name"], input["description"], input["category"], input["price"], input["stock"])
 	return err
+}
+
+func (repository *Repository) GetStandByUserId(userId int) (types.Stand, error) {
+	stand := types.Stand{}
+	query := "SELECT * FROM stands WHERE user_id=$1 LIMIT 1"
+	err := repository.db.Get(&stand, query, userId)
+	return stand, err
 }

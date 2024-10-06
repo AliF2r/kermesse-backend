@@ -29,8 +29,9 @@ func NewStandsHandler(standService stands.StandsService, usersRepository users.U
 func (handler *StandsHandler) RegisterRoutes(router *mux.Router) {
 	router.Handle("/stands", errors.ErrorHandler(middleware.IsAuth(handler.AddStand, handler.usersRepository, types.UserRoleStandHolder))).Methods(http.MethodPost)
 	router.Handle("/stands", errors.ErrorHandler(middleware.IsAuth(handler.GetAllStands, handler.usersRepository))).Methods(http.MethodGet)
+	router.Handle("/stands/owner", errors.ErrorHandler(middleware.IsAuth(handler.GetOwnStand, handler.usersRepository, types.UserRoleStandHolder))).Methods(http.MethodGet)
 	router.Handle("/stands/{id}", errors.ErrorHandler(middleware.IsAuth(handler.GetStandById, handler.usersRepository))).Methods(http.MethodGet)
-	router.Handle("/stands/{id}", errors.ErrorHandler(middleware.IsAuth(handler.ModifyStand, handler.usersRepository, types.UserRoleStandHolder))).Methods(http.MethodPatch)
+	router.Handle("/stands/modify", errors.ErrorHandler(middleware.IsAuth(handler.ModifyStand, handler.usersRepository, types.UserRoleStandHolder))).Methods(http.MethodPatch)
 }
 
 func (handler *StandsHandler) AddStand(w http.ResponseWriter, r *http.Request) error {
@@ -90,14 +91,6 @@ func (handler *StandsHandler) GetStandById(w http.ResponseWriter, r *http.Reques
 }
 
 func (handler *StandsHandler) ModifyStand(w http.ResponseWriter, r *http.Request) error {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		return errors.CustomError{
-			Key: errors.InternalServerError,
-			Err: err,
-		}
-	}
 	var input map[string]interface{}
 	if err := json.Parse(r, &input); err != nil {
 		return errors.CustomError{
@@ -105,10 +98,25 @@ func (handler *StandsHandler) ModifyStand(w http.ResponseWriter, r *http.Request
 			Err: err,
 		}
 	}
-	if err := handler.standService.ModifyStand(r.Context(), id, input); err != nil {
+
+	if err := handler.standService.ModifyStand(r.Context(), input); err != nil {
 		return err
 	}
 	if err := json.Write(w, http.StatusAccepted, nil); err != nil {
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+	return nil
+}
+
+func (handler *StandsHandler) GetOwnStand(w http.ResponseWriter, r *http.Request) error {
+	stand, err := handler.standService.GetOwnStand(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := json.Write(w, http.StatusOK, stand); err != nil {
 		return errors.CustomError{
 			Key: errors.InternalServerError,
 			Err: err,

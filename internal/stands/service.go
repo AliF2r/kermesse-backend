@@ -12,7 +12,8 @@ type StandsService interface {
 	GetAllStands(params map[string]interface{}) ([]types.Stand, error)
 	GetStandById(id int) (types.Stand, error)
 	AddStand(ctx context.Context, input map[string]interface{}) error
-	ModifyStand(ctx context.Context, id int, input map[string]interface{}) error // TODO: to get by userID
+	ModifyStand(ctx context.Context, input map[string]interface{}) error
+	GetOwnStand(ctx context.Context) (types.Stand, error)
 }
 
 type Service struct {
@@ -85,20 +86,8 @@ func (service *Service) AddStand(ctx context.Context, input map[string]interface
 	return nil
 }
 
-func (service *Service) ModifyStand(ctx context.Context, id int, input map[string]interface{}) error {
-	stand, err := service.standsRepository.GetStandById(id)
-	if err != nil {
-		if goErrors.Is(err, sql.ErrNoRows) {
-			return errors.CustomError{
-				Key: errors.NotFound,
-				Err: err,
-			}
-		}
-		return errors.CustomError{
-			Key: errors.InternalServerError,
-			Err: err,
-		}
-	}
+func (service *Service) ModifyStand(ctx context.Context, input map[string]interface{}) error {
+
 	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
 	if !ok {
 		return errors.CustomError{
@@ -106,13 +95,8 @@ func (service *Service) ModifyStand(ctx context.Context, id int, input map[strin
 			Err: goErrors.New("user id not found"),
 		}
 	}
-	if stand.UserId != userId {
-		return errors.CustomError{
-			Key: errors.Forbidden,
-			Err: goErrors.New("user is not the holder"),
-		}
-	}
-	err = service.standsRepository.ModifyStand(id, input)
+
+	err := service.standsRepository.UpdateStandByStandHolderId(userId, input)
 	if err != nil {
 		return errors.CustomError{
 			Key: errors.InternalServerError,
@@ -120,4 +104,30 @@ func (service *Service) ModifyStand(ctx context.Context, id int, input map[strin
 		}
 	}
 	return nil
+}
+
+func (service *Service) GetOwnStand(ctx context.Context) (types.Stand, error) {
+	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
+	if !ok {
+		return types.Stand{}, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user id not found"),
+		}
+	}
+
+	stand, err := service.standsRepository.GetStandByUserId(userId)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return stand, errors.CustomError{
+				Key: errors.NotFound,
+				Err: err,
+			}
+		}
+		return stand, errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
+	return stand, nil
 }
