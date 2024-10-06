@@ -40,6 +40,11 @@ func (service *Service) GetAllStands(params map[string]interface{}) ([]types.Sta
 			Err: err,
 		}
 	}
+
+	if stands == nil {
+		return []types.Stand{}, nil
+	}
+
 	return stands, nil
 }
 

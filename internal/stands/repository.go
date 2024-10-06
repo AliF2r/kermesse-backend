@@ -44,7 +44,7 @@ func (repository *Repository) GetAllStands(filters map[string]interface{}) ([]ty
 	var conditions []string
 	if isReady, ok := filters["is_ready"]; ok && isReady != nil {
 		conditions = append(conditions, `
-			AND (
+			(
 				ks.kermesse_id IS NULL
 				OR s.id NOT IN (
 					SELECT ks_inner.stand_id 

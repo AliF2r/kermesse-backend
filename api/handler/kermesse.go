@@ -32,7 +32,7 @@ func (handler *KermessesHandler) RegisterRoutes(router *mux.Router) {
 	router.Handle("/kermesses/{id}/complete", errors.ErrorHandler(middleware.IsAuth(handler.CompleteKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPatch)
 	router.Handle("/kermesses/{id}/add-user", errors.ErrorHandler(middleware.IsAuth(handler.AssignUserToKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPost)
 	router.Handle("/kermesses/{id}/users", errors.ErrorHandler(middleware.IsAuth(handler.GetUsersForInvitation, handler.usersRepository))).Methods(http.MethodGet)
-	router.Handle("/kermesses/{id}/add-stand", errors.ErrorHandler(middleware.IsAuth(handler.AssignStandToKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPost)
+	router.Handle("/kermesses/{id}/add-stand", errors.ErrorHandler(middleware.IsAuth(handler.AssignStandToKermesse, handler.usersRepository, types.UserRoleOrganizer))).Methods(http.MethodPatch)
 }
 
 func (handler *KermessesHandler) GetAllKermesses(w http.ResponseWriter, r *http.Request) error {
