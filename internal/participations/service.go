@@ -234,7 +234,7 @@ func (service *Service) ModifyParticipation(ctx context.Context, id int, input m
 		}
 	}
 
-	if participation.Stand.Type != types.ParticipationTypeGame {
+	if participation.Stand.Category != types.ParticipationTypeGame {
 		return errors.CustomError{
 			Key: errors.BadRequest,
 			Err: goErrors.New("participation type is not activity"),

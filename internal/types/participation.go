@@ -35,14 +35,14 @@ type ParticipatedKermesse struct {
 type ParticipatedStand struct {
 	Id          int    `json:"id" db:"id"`
 	Name        string `json:"name" db:"name"`
-	Type        string `json:"type" db:"type"`
+	Category    string `json:"category" db:"category"`
 	Price       int    `json:"price" db:"price"`
 	Description string `json:"description" db:"description"`
 }
 
 type ParticipationCompleteModel struct {
 	Id       int                  `json:"id" db:"id"`
-	Type     string               `json:"type" db:"type"`
+	Category string               `json:"category" db:"category"`
 	Balance  int                  `json:"balance" db:"balance"`
 	Point    int                  `json:"point" db:"point"`
 	Status   string               `json:"status" db:"status"`
@@ -52,11 +52,11 @@ type ParticipationCompleteModel struct {
 }
 
 type ParticipationUserStand struct {
-	Id      int               `json:"id" db:"id"`
-	Type    string            `json:"type" db:"type"`
-	Balance int               `json:"balance" db:"balance"`
-	Point   int               `json:"point" db:"point"`
-	Status  string            `json:"status" db:"status"`
-	User    ParticipatedUser  `json:"user" db:"user"`
-	Stand   ParticipatedStand `json:"stand" db:"stand"`
+	Id       int               `json:"id" db:"id"`
+	Category string            `json:"category" db:"category"`
+	Balance  int               `json:"balance" db:"balance"`
+	Point    int               `json:"point" db:"point"`
+	Status   string            `json:"status" db:"status"`
+	User     ParticipatedUser  `json:"user" db:"user"`
+	Stand    ParticipatedStand `json:"stand" db:"stand"`
 }

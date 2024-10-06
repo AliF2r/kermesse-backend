@@ -38,7 +38,7 @@ func (repository *Repository) GetAllParticipations(filters map[string]interface{
 			s.name AS "stand.name",
 			s.description AS "stand.description",
 			s.price AS "stand.price",
-			s.type AS "stand.type",
+			s.category AS "stand.category",
 			u.id AS "user.id",
 			u.name AS "user.name",
 			u.email AS "user.email",
