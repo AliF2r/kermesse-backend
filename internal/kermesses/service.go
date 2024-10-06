@@ -367,5 +367,10 @@ func (service *Service) GetUsersForInvitation(id int) ([]types.UserBasic, error)
 			Err: err,
 		}
 	}
+
+	if users == nil {
+		return []types.UserBasic{}, nil
+	}
+
 	return users, nil
 }
