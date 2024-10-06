@@ -74,6 +74,11 @@ func (service *Service) GetAllParticipations(ctx context.Context, params map[str
 			Err: err,
 		}
 	}
+
+	if participations == nil {
+		return []types.ParticipationUserStand{}, nil
+	}
+
 	return participations, nil
 }
 

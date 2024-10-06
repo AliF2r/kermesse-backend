@@ -44,8 +44,8 @@ func (repository *Repository) GetAllParticipations(filters map[string]interface{
 			u.email AS "user.email",
 			u.role AS "user.role"
 		FROM participations p
-		JOIN users u ON i.user_id = u.id
-		JOIN stands s ON i.stand_id = s.id
+		JOIN users u ON p.user_id = u.id
+		JOIN stands s ON p.stand_id = s.id
 		WHERE 1=1
 	`
 
