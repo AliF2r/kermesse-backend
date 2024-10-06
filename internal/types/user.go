@@ -33,10 +33,11 @@ type UserBasic struct {
 }
 
 type UserWithAuthToken struct {
-	Id      int    `json:"id" db:"id"`
-	Name    string `json:"name" db:"name"`
-	Email   string `json:"email" db:"email"`
-	Role    string `json:"role" db:"role"`
-	Balance int    `json:"balance" db:"balance"`
-	Token   string `json:"token"`
+	Id        int    `json:"id" db:"id"`
+	Name      string `json:"name" db:"name"`
+	Email     string `json:"email" db:"email"`
+	Role      string `json:"role" db:"role"`
+	Balance   int    `json:"balance" db:"balance"`
+	WithStand bool   `json:"with_stand"`
+	Token     string `json:"token"`
 }
