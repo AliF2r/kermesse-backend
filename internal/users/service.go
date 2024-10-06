@@ -80,6 +80,10 @@ func (service *Service) GetAllStudentByParentId(ctx context.Context, params map[
 			Err: err,
 		}
 	}
+
+	if users == nil {
+		return []types.UserBasic{}, nil
+	}
 	return users, nil
 }
 

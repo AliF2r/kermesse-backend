@@ -74,7 +74,32 @@ func (repository *Repository) GetAllParticipations(filters map[string]interface{
 
 func (repository *Repository) GetParticipationById(id int) (types.ParticipationCompleteModel, error) {
 	var participation types.ParticipationCompleteModel
-	query := "SELECT * FROM participations WHERE id=$1"
+	query := `
+		SELECT
+			p.id AS id,
+			p.balance AS balance,
+			p.category AS category,
+			p.status AS status,
+			p.point AS point,
+			u.id AS "user.id",
+			u.name AS "user.name",
+			u.email AS "user.email",
+			u.role AS "user.role",
+			s.id AS "stand.id",
+			s.name AS "stand.name",
+			s.category AS "stand.category",
+			s.price AS "stand.price",
+			s.description AS "stand.description",
+			k.id AS "kermesse.id",
+			k.name AS "kermesse.name",
+			k.description AS "kermesse.description",
+			k.status AS "kermesse.status"
+		FROM participations p
+		JOIN users u ON p.user_id = u.id
+		JOIN stands s ON p.stand_id = s.id
+		JOIN kermesses k ON p.kermesse_id = k.id
+		WHERE p.id=$1
+	`
 	err := repository.db.Get(&participation, query, id)
 	return participation, err
 }
