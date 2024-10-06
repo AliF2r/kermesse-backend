@@ -31,7 +31,7 @@ func (h *TicketHandler) RegisterRoutes(mux *mux.Router) {
 }
 
 func (h *TicketHandler) GetAllTickets(w http.ResponseWriter, r *http.Request) error {
-	tickets, err := h.ticketsService.GetAllTickets()
+	tickets, err := h.ticketsService.GetAllTickets(r.Context())
 	if err != nil {
 		return err
 	}

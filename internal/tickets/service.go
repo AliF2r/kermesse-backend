@@ -12,8 +12,8 @@ import (
 )
 
 type TicketService interface {
-	GetAllTickets() ([]types.Ticket, error)
-	GetTicketById(id int) (types.Ticket, error)
+	GetAllTickets(ctx context.Context) ([]types.TicketCompleteModel, error)
+	GetTicketById(id int) (types.TicketCompleteModel, error)
 	CreateTicket(ctx context.Context, input map[string]interface{}) error
 }
 
@@ -31,18 +31,48 @@ func NewTicketsService(ticketsRepository TicketRepository, tombolasRepository to
 	}
 }
 
-func (service *Service) GetAllTickets() ([]types.Ticket, error) {
-	tickets, err := service.ticketsRepository.GetAllTickets()
+func (service *Service) GetAllTickets(ctx context.Context) ([]types.TicketCompleteModel, error) {
+	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user Id not found"),
+		}
+	}
+	userRole, ok := ctx.Value(types.UserRoleSessionKey).(string)
+	if !ok {
+		return nil, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user role not found"),
+		}
+	}
+
+	filters := make(map[string]interface{})
+	switch userRole {
+	case types.UserRoleStudent:
+		filters["student_id"] = userId
+	case types.UserRoleParent:
+		filters["parent_id"] = userId
+	case types.UserRoleStandHolder:
+		filters["stand_holder_id"] = userId
+	}
+
+	tickets, err := service.ticketsRepository.GetAllTickets(filters)
 	if err != nil {
 		return nil, errors.CustomError{
 			Key: errors.InternalServerError,
 			Err: err,
 		}
 	}
+
+	if tickets == nil {
+		return []types.TicketCompleteModel{}, nil
+	}
+
 	return tickets, nil
 }
 
-func (service *Service) GetTicketById(id int) (types.Ticket, error) {
+func (service *Service) GetTicketById(id int) (types.TicketCompleteModel, error) {
 	ticket, err := service.ticketsRepository.GetTicketById(id)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {

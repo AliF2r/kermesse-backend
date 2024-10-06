@@ -7,4 +7,32 @@ type Ticket struct {
 	IsWinner  bool `json:"is_winner" db:"is_winner"`
 }
 
-//TODO: add type for sending the winner information
+type TicketUser struct {
+	Id    int    `json:"id" db:"id"`
+	Name  string `json:"name" db:"name"`
+	Email string `json:"email" db:"email"`
+	Role  string `json:"role" db:"role"`
+}
+
+type TicketTombola struct {
+	Id     int    `json:"id" db:"id"`
+	Name   string `json:"name" db:"name"`
+	Status string `json:"status" db:"status"`
+	Prize  string `json:"prize" db:"prize"`
+	Price  int    `json:"price" db:"price"`
+}
+
+type TicketKermesse struct {
+	Id          int    `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	Description string `json:"description" db:"description"`
+	Status      string `json:"status" db:"status"`
+}
+
+type TicketCompleteModel struct {
+	Id       int            `json:"id" db:"id"`
+	IsWinner bool           `json:"is_winner" db:"is_winner"`
+	User     TicketUser     `json:"user" db:"user"`
+	Tombola  TicketTombola  `json:"tombola" db:"tombola"`
+	Kermesse TicketKermesse `json:"kermesse" db:"kermesse"`
+}
