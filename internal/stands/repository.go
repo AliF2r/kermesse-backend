@@ -1,12 +1,14 @@
 package stands
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/kermesse-backend/internal/types"
+	"strings"
 )
 
 type StandsRepository interface {
-	GetAllStands() ([]types.Stand, error)
+	GetAllStands(filters map[string]interface{}) ([]types.Stand, error)
 	GetStandById(id int) (types.Stand, error)
 	AddStand(input map[string]interface{}) error
 	ModifyStand(id int, input map[string]interface{}) error
@@ -23,10 +25,46 @@ func NewStandsRepository(db *sqlx.DB) *Repository {
 	}
 }
 
-func (repository *Repository) GetAllStands() ([]types.Stand, error) {
+func (repository *Repository) GetAllStands(filters map[string]interface{}) ([]types.Stand, error) {
 	var stands []types.Stand
-	query := "SELECT * FROM stands"
-	err := repository.db.Select(&stands, query)
+	baseQuery := `
+		SELECT DISTINCT
+			s.id AS id,
+			s.user_id AS user_id,
+			s.name AS name,
+			s.price AS price,
+			s.stock AS stock,
+			s.description AS description,
+			s.category AS category
+		FROM stands s
+		LEFT JOIN kermesses_stands ks ON ks.stand_id = s.id
+		WHERE 1=1 AND s.id IS NOT NULL
+	`
+
+	var conditions []string
+	if isReady, ok := filters["is_ready"]; ok && isReady != nil {
+		conditions = append(conditions, `
+			AND (
+				ks.kermesse_id IS NULL
+				OR s.id NOT IN (
+					SELECT ks_inner.stand_id 
+					FROM kermesses_stands ks_inner
+					JOIN kermesses k ON ks_inner.kermesse_id = k.id
+					WHERE k.status = 'STARTED'
+				)
+			)
+		`)
+	}
+	if kermesseId, ok := filters["kermesse_id"]; ok {
+		conditions = append(conditions, fmt.Sprintf("ks.kermesse_id IS NOT NULL AND ks.kermesse_id = %v", kermesseId))
+	}
+
+	if len(conditions) > 0 {
+		baseQuery += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	err := repository.db.Select(&stands, baseQuery)
+
 	return stands, err
 }
 

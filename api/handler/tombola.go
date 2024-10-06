@@ -8,6 +8,7 @@ import (
 	"github.com/kermesse-backend/internal/users"
 	"github.com/kermesse-backend/pkg/errors"
 	"github.com/kermesse-backend/pkg/json"
+	"github.com/kermesse-backend/pkg/utils"
 	"net/http"
 	"strconv"
 )
@@ -33,7 +34,7 @@ func (handler *TombolasHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (handler *TombolasHandler) GetAllTombolas(w http.ResponseWriter, r *http.Request) error {
-	tombolas, err := handler.tombolasService.GetAllTombolas()
+	tombolas, err := handler.tombolasService.GetAllTombolas(utils.GetParams(r))
 	if err != nil {
 		return err
 	}

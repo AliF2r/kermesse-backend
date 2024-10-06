@@ -11,7 +11,7 @@ import (
 )
 
 type TombolaService interface {
-	GetAllTombolas() ([]types.Tombola, error)
+	GetAllTombolas(params map[string]interface{}) ([]types.Tombola, error)
 	GetTombolaById(id int) (types.Tombola, error)
 	AddTombola(ctx context.Context, input map[string]interface{}) error
 	ModifyTombola(ctx context.Context, id int, input map[string]interface{}) error
@@ -30,14 +30,23 @@ func NewTombolasService(tombolasRepository TombolaRepository, kermessesRepositor
 	}
 }
 
-func (service *Service) GetAllTombolas() ([]types.Tombola, error) {
-	tombolas, err := service.tombolasRepository.GetAllTombolas()
+func (service *Service) GetAllTombolas(params map[string]interface{}) ([]types.Tombola, error) {
+	filters := make(map[string]interface{})
+	if kermesseId, exists := params["kermesse_id"]; exists {
+		filters["kermesse_id"] = kermesseId
+	}
+	tombolas, err := service.tombolasRepository.GetAllTombolas(filters)
 	if err != nil {
 		return nil, errors.CustomError{
 			Key: errors.InternalServerError,
 			Err: err,
 		}
 	}
+
+	if tombolas == nil {
+		return []types.Tombola{}, nil
+	}
+
 	return tombolas, nil
 }
 

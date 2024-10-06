@@ -9,10 +9,10 @@ import (
 )
 
 type StandsService interface {
-	GetAllStands() ([]types.Stand, error)
+	GetAllStands(params map[string]interface{}) ([]types.Stand, error)
 	GetStandById(id int) (types.Stand, error)
 	AddStand(ctx context.Context, input map[string]interface{}) error
-	ModifyStand(ctx context.Context, id int, input map[string]interface{}) error
+	ModifyStand(ctx context.Context, id int, input map[string]interface{}) error // TODO: to get by userID
 }
 
 type Service struct {
@@ -25,8 +25,15 @@ func NewStandsService(standsRepository StandsRepository) *Service {
 	}
 }
 
-func (service *Service) GetAllStands() ([]types.Stand, error) {
-	stands, err := service.standsRepository.GetAllStands()
+func (service *Service) GetAllStands(params map[string]interface{}) ([]types.Stand, error) {
+	filters := make(map[string]interface{})
+	if kermesseId, exists := params["kermesse_id"]; exists {
+		filters["kermesse_id"] = kermesseId
+	}
+	if isReady, exists := params["is_ready"]; exists {
+		filters["is_ready"] = isReady
+	}
+	stands, err := service.standsRepository.GetAllStands(filters)
 	if err != nil {
 		return nil, errors.CustomError{
 			Key: errors.InternalServerError,

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/kermesse-backend/pkg/utils"
 	"net/http"
 	"strconv"
 
@@ -53,7 +54,7 @@ func (handler *StandsHandler) AddStand(w http.ResponseWriter, r *http.Request) e
 }
 
 func (handler *StandsHandler) GetAllStands(w http.ResponseWriter, r *http.Request) error {
-	stands, err := handler.standService.GetAllStands()
+	stands, err := handler.standService.GetAllStands(utils.GetParams(r))
 	if err != nil {
 		return err
 	}
