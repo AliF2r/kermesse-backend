@@ -30,7 +30,7 @@ func (repository *Repository) GetAllParticipations(filters map[string]interface{
 	baseQuery := `
 		SELECT DISTINCT
 			p.id AS id,
-			p.type AS type,
+			p.category AS category,
 			p.status AS status,
 			p.point AS point,
 			p.balance AS balance,
