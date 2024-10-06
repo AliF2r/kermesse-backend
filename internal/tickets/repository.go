@@ -92,7 +92,7 @@ func (repository *Repository) GetTicketById(id int) (types.TicketCompleteModel, 
 		JOIN tombolas t ON ticket.tombola_id = t.id
 		JOIN kermesses k ON t.kermesse_id = k.id
 		JOIN users u ON ticket.user_id = u.id
-		WHERE t.id=$1
+		WHERE ticket.id=$1
 	`
 	err := repository.db.Get(&ticket, query, id)
 	return ticket, err
