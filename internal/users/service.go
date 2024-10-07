@@ -7,7 +7,6 @@ import (
 	goJwt "github.com/golang-jwt/jwt/v5"
 	"github.com/kermesse-backend/internal/types"
 	"github.com/kermesse-backend/pkg/errors"
-	"github.com/kermesse-backend/pkg/generator"
 	"github.com/kermesse-backend/pkg/hasher"
 	"github.com/kermesse-backend/pkg/jwt"
 	"github.com/kermesse-backend/pkg/utils"
@@ -243,7 +242,7 @@ func (service *Service) GetLoggedInUser(ctx context.Context) (types.UserWithAuth
 		Email:     user.Email,
 		Balance:   user.Balance,
 		Role:      user.Role,
-		WithStand: withStand, // TODO: to add empty token
+		WithStand: withStand,
 	}, nil
 }
 
@@ -256,15 +255,7 @@ func (service *Service) InviteStudent(ctx context.Context, input map[string]inte
 		}
 	}
 
-	randomPassword, err := generator.RandomPassword(8)
-	if err != nil {
-		return errors.CustomError{
-			Key: errors.InternalServerError,
-			Err: err,
-		}
-	}
-
-	hashedPassword, err := hasher.Hash(randomPassword)
+	hashedPassword, err := hasher.Hash("esgi-kermesse")
 	if err != nil {
 		return err
 	}
@@ -291,7 +282,6 @@ func (service *Service) InviteStudent(ctx context.Context, input map[string]inte
 		}
 	}
 
-	//TODO: Send Email
 	return nil
 }
 

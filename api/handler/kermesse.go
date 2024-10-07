@@ -78,7 +78,8 @@ func (handler *KermessesHandler) GetKermesseById(w http.ResponseWriter, r *http.
 			Err: err,
 		}
 	}
-	kermesse, err := handler.kermessesService.GetKermesseById(id)
+
+	kermesse, err := handler.kermessesService.GetKermesseById(r.Context(), id)
 	if err != nil {
 		return err
 	}

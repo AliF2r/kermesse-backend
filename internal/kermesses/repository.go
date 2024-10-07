@@ -18,6 +18,7 @@ type KermessesRepository interface {
 	IsCompletionAllowed(id int) (bool, error)
 	LinkUserToKermesse(input map[string]interface{}) error
 	GetUsersForInvitation(kermesseId int) ([]types.UserBasic, error)
+	getStatistics(id int, filters map[string]interface{}) (types.KermesseStatistics, error)
 }
 
 type Repository struct {
@@ -140,4 +141,91 @@ func (repository *Repository) GetUsersForInvitation(kermesseId int) ([]types.Use
 	err := repository.db.Select(&users, query, kermesseId)
 
 	return users, err
+}
+
+func (repository *Repository) getStatistics(id int, filters map[string]interface{}) (types.KermesseStatistics, error) {
+	statistics := types.KermesseStatistics{}
+
+	if err := repository.getStandNumber(id, &statistics.StandNumber); err != nil {
+		return types.KermesseStatistics{}, err
+	}
+
+	if err := repository.getTombolaNumber(id, &statistics.TombolaNumber); err != nil {
+		return types.KermesseStatistics{}, err
+	}
+
+	if err := repository.getUserNumber(id, filters, &statistics.UserNumber); err != nil {
+		return types.KermesseStatistics{}, err
+	}
+
+	if err := repository.getParticipationStatistics(id, filters, &statistics.ParticipationNumber, &statistics.ParticipationBenefit); err != nil {
+		return types.KermesseStatistics{}, err
+	}
+
+	if filters["organizer_id"] != nil {
+		if err := repository.getTombolaBenefits(id, &statistics.TombolaBenefit); err != nil {
+			return types.KermesseStatistics{}, err
+		}
+	}
+
+	if filters["student_id"] != nil {
+		if err := repository.getPoints(id, filters["student_id"].(int), &statistics.Points); err != nil {
+			return types.KermesseStatistics{}, err
+		}
+	}
+
+	return types.KermesseStatistics{
+		UserNumber:           statistics.UserNumber,
+		StandNumber:          statistics.StandNumber,
+		TombolaNumber:        statistics.TombolaNumber,
+		TombolaBenefit:       statistics.TombolaBenefit,
+		ParticipationNumber:  statistics.ParticipationNumber,
+		ParticipationBenefit: statistics.ParticipationBenefit,
+		Points:               statistics.Points,
+	}, nil
+}
+
+func (repository *Repository) getStandNumber(kermesseId int, standNumber *int) error {
+	query := "SELECT COUNT(*) FROM kermesses_stands WHERE kermesse_id=$1"
+	return repository.db.Get(standNumber, query, kermesseId)
+}
+
+func (repository *Repository) getTombolaNumber(kermesseId int, tombolaNumber *int) error {
+	query := "SELECT COUNT(*) FROM tombolas WHERE kermesse_id=$1"
+	return repository.db.Get(tombolaNumber, query, kermesseId)
+}
+
+func (repository *Repository) getUserNumber(kermesseId int, filters map[string]interface{}, userNumber *int) error {
+	query := `SELECT COUNT(*) FROM kermesses_users ku JOIN users u ON ku.user_id = u.id WHERE ku.kermesse_id=$1`
+	if filters["parent_id"] != nil {
+		query += fmt.Sprintf(" AND u.role='%v' AND u.parent_id=%v", types.UserRoleStudent, filters["parent_id"])
+	}
+	return repository.db.Get(userNumber, query, kermesseId)
+}
+
+func (repository *Repository) getParticipationStatistics(kermesseId int, filters map[string]interface{}, participationNumber *int, participationBenefits *int) error {
+	query := `SELECT COUNT(*) FROM participations p JOIN stands s ON p.stand_id = s.id WHERE p.kermesse_id=$1`
+	if filters["stand_holder_id"] != nil {
+		query += fmt.Sprintf(" AND s.user_id=%v", filters["stand_holder_id"])
+	}
+	err := repository.db.Get(participationNumber, query, kermesseId)
+	if err != nil {
+		return err
+	}
+
+	query = `SELECT COALESCE(SUM(p.balance), 0) FROM participations p JOIN stands s ON p.stand_id = s.id WHERE p.kermesse_id=$1`
+	if filters["stand_holder_id"] != nil {
+		query += fmt.Sprintf(" AND s.user_id=%v", filters["stand_holder_id"])
+	}
+	return repository.db.Get(participationBenefits, query, kermesseId)
+}
+
+func (repository *Repository) getTombolaBenefits(kermesseId int, tombolaBenefits *int) error {
+	query := `SELECT COALESCE(SUM(tb.price), 0) FROM tickets t JOIN tombolas tb ON t.tombola_id = tb.id WHERE tb.kermesse_id=$1`
+	return repository.db.Get(tombolaBenefits, query, kermesseId)
+}
+
+func (repository *Repository) getPoints(kermesseId int, userId int, points *int) error {
+	query := "SELECT COALESCE(SUM(point), 0) FROM participations WHERE kermesse_id=$1 AND user_id=$2"
+	return repository.db.Get(points, query, kermesseId, userId)
 }

@@ -50,7 +50,6 @@ func (repository *Repository) GetAllTickets(filters map[string]interface{}) ([]t
 		WHERE 1=1
 	`
 
-	// Applying dynamic filters
 	var conditions []string
 	if organizerId, ok := filters["organizer_id"]; ok {
 		conditions = append(conditions, fmt.Sprintf("k.user_id IS NOT NULL AND k.user_id = %v", organizerId))

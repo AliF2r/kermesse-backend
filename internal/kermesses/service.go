@@ -12,7 +12,7 @@ import (
 
 type KermessesService interface {
 	GetAllKermesses(ctx context.Context) ([]types.Kermesse, error)
-	GetKermesseById(id int) (types.Kermesse, error)
+	GetKermesseById(ctx context.Context, id int) (types.KermesseWithStatistics, error)
 	AddKermesse(ctx context.Context, input map[string]interface{}) error
 	UpdateKermesse(ctx context.Context, id int, input map[string]interface{}) error
 	MarkKermesseAsComplete(ctx context.Context, id int) error
@@ -73,21 +73,73 @@ func (service *Service) GetAllKermesses(ctx context.Context) ([]types.Kermesse, 
 	return kermesses, nil
 }
 
-func (service *Service) GetKermesseById(id int) (types.Kermesse, error) {
+func (service *Service) GetKermesseById(ctx context.Context, id int) (types.KermesseWithStatistics, error) {
+
+	userId, ok := ctx.Value(types.UserIDSessionKey).(int)
+	if !ok {
+		return types.KermesseWithStatistics{}, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user id not found in context"),
+		}
+	}
+	userRole, ok := ctx.Value(types.UserRoleSessionKey).(string)
+	if !ok {
+		return types.KermesseWithStatistics{}, errors.CustomError{
+			Key: errors.Unauthorized,
+			Err: goErrors.New("user role not found in context"),
+		}
+	}
+
 	kermesse, err := service.kermessesRepository.GetKermesseById(id)
 	if err != nil {
 		if goErrors.Is(err, sql.ErrNoRows) {
-			return kermesse, errors.CustomError{
+			return types.KermesseWithStatistics{}, errors.CustomError{
 				Key: errors.NotFound,
 				Err: err,
 			}
 		}
-		return kermesse, errors.CustomError{
+		return types.KermesseWithStatistics{}, errors.CustomError{
 			Key: errors.InternalServerError,
 			Err: err,
 		}
 	}
-	return kermesse, nil
+
+	filters := make(map[string]interface{})
+	switch userRole {
+	case types.UserRoleStudent:
+		filters["student_id"] = userId
+	case types.UserRoleOrganizer:
+		filters["organizer_id"] = userId
+	case types.UserRoleStandHolder:
+		filters["stand_holder_id"] = userId
+	case types.UserRoleParent:
+		filters["parent_id"] = userId
+	}
+
+	statistics, err := service.kermessesRepository.getStatistics(id, filters)
+	if err != nil {
+		return types.KermesseWithStatistics{}, errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
+	KermesseWithStatistics := types.KermesseWithStatistics{
+		Id:                   kermesse.Id,
+		Name:                 kermesse.Name,
+		UserId:               kermesse.UserId,
+		Status:               kermesse.Status,
+		Description:          kermesse.Description,
+		UserNumber:           statistics.UserNumber,
+		StandNumber:          statistics.StandNumber,
+		TombolaNumber:        statistics.TombolaNumber,
+		TombolaBenefit:       statistics.TombolaBenefit,
+		ParticipationNumber:  statistics.ParticipationNumber,
+		ParticipationBenefit: statistics.ParticipationBenefit,
+		Points:               statistics.Points,
+	}
+
+	return KermesseWithStatistics, nil
 }
 
 func (service *Service) AddKermesse(ctx context.Context, input map[string]interface{}) error {

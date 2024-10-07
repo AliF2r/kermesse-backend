@@ -53,8 +53,8 @@ func (service *Service) GetAllTickets(ctx context.Context) ([]types.TicketComple
 		filters["student_id"] = userId
 	case types.UserRoleParent:
 		filters["parent_id"] = userId
-	case types.UserRoleStandHolder:
-		filters["stand_holder_id"] = userId
+	case types.UserRoleOrganizer:
+		filters["organizer_id"] = userId
 	}
 
 	tickets, err := service.ticketsRepository.GetAllTickets(filters)
