@@ -165,7 +165,7 @@ func (service *Service) AddParticipation(ctx context.Context, input map[string]i
 		totalPrice *= quantity
 	}
 
-	if stand.Category == types.ParticipationTypeFood && stand.Stock < totalPrice {
+	if stand.Category == types.ParticipationTypeFood && stand.Stock < quantity {
 		return errors.CustomError{
 			Key: errors.BadRequest,
 			Err: goErrors.New("insufficient stock"),
