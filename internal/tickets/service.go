@@ -4,11 +4,15 @@ import (
 	"context"
 	"database/sql"
 	goErrors "errors"
+	"fmt"
+	"github.com/kermesse-backend/internal/kermesses"
+	"github.com/kermesse-backend/internal/notifications"
 	"github.com/kermesse-backend/internal/tombolas"
 	"github.com/kermesse-backend/internal/types"
 	"github.com/kermesse-backend/internal/users"
 	"github.com/kermesse-backend/pkg/errors"
 	"github.com/kermesse-backend/pkg/utils"
+	"strconv"
 )
 
 type TicketService interface {
@@ -21,13 +25,15 @@ type Service struct {
 	ticketsRepository  TicketRepository
 	tombolasRepository tombolas.TombolaRepository
 	usersRepository    users.UsersRepository
+	kermesseRepository kermesses.KermessesRepository
 }
 
-func NewTicketsService(ticketsRepository TicketRepository, tombolasRepository tombolas.TombolaRepository, usersRepository users.UsersRepository) *Service {
+func NewTicketsService(ticketsRepository TicketRepository, tombolasRepository tombolas.TombolaRepository, usersRepository users.UsersRepository, kermesseRepository kermesses.KermessesRepository) *Service {
 	return &Service{
 		ticketsRepository:  ticketsRepository,
 		tombolasRepository: tombolasRepository,
 		usersRepository:    usersRepository,
+		kermesseRepository: kermesseRepository,
 	}
 }
 
@@ -174,5 +180,22 @@ func (service *Service) CreateTicket(ctx context.Context, input map[string]inter
 			Err: err,
 		}
 	}
+
+	kermesse, err := service.kermesseRepository.GetKermesseById(tombola.KermesseId)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return errors.CustomError{
+				Key: errors.NotFound,
+				Err: err,
+			}
+		}
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
+	message := fmt.Sprintf("Student %s bought a ticket for %v tomola", user.Name, tombola.Name)
+	notifications.NotifyOrganizer(strconv.Itoa(kermesse.UserId), message)
 	return nil
 }

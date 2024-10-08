@@ -61,11 +61,14 @@ func (s *APIServer) Start() error {
 	tombolaHandler.RegisterRoutes(router)
 
 	ticketRepository := tickets.NewTicketsRepository(s.db)
-	ticketService := tickets.NewTicketsService(ticketRepository, tombolaRepository, userRepository)
+	ticketService := tickets.NewTicketsService(ticketRepository, tombolaRepository, userRepository, kermesseRepository)
 	ticketHandler := handler.NewTicketsHandler(ticketService, userRepository)
 	ticketHandler.RegisterRoutes(router)
 
 	router.HandleFunc("/webhook", handler.HandleWebhook(userService)).Methods(http.MethodPost)
+
+	websocketHandler := handler.NewWebSocketHandler()
+	router.HandleFunc("/ws", websocketHandler.HandleWebSocket).Methods(http.MethodGet)
 
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
