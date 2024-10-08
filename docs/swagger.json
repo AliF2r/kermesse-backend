@@ -1,0 +1,876 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "API for Kermesse SasS ",
+    "title": "Kermesse",
+    "contact": {},
+    "version": "1.0"
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Operations related to authentication"
+    },
+    {
+      "name": "Users",
+      "description": "Operations related to users"
+    },
+    {
+      "name": "Kermesses",
+      "description": "Operations related to kermesses"
+    },
+    {
+      "name": "Participations",
+      "description": "Operations related to participations"
+    },
+    {
+      "name": "Stands",
+      "description": "Operations related to stands"
+    },
+    {
+      "name": "Tickets",
+      "description": "Operations related to tickets"
+    },
+    {
+      "name": "Tombolas",
+      "description": "Operations related to tombolas"
+    }
+  ],
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
+  "paths": {
+    "/users/password/{id}": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update user password",
+        "description": "Update the password of a user by its ID",
+        "operationId": "updatePassword",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the user",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "password",
+            "description": "New password",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePasswordRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/users/send-jeton": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Send jeton (payment) to a user",
+        "description": "Allow a parent to send a jeton (payment) to a student",
+        "operationId": "sendJeton",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "payment",
+            "description": "Payment details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PaymentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jeton sent successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "description": "Register a new user in the system",
+        "operationId": "registerUser",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "user",
+            "description": "User object to register",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User registered successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "description": "Login with email and password",
+        "operationId": "loginUser",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "credentials",
+            "description": "User credentials",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get the logged-in user's details",
+        "description": "Retrieve information about the currently logged-in user",
+        "operationId": "getLoggedInUser",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Logged-in user's details",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/kermesses": {
+      "get": {
+        "tags": ["Kermesses"],
+        "summary": "Get all kermesses",
+        "description": "Fetch a list of all kermesses",
+        "operationId": "getAllKermesses",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "A list of kermesses",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Kermesse"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Kermesses"],
+        "summary": "Create a new kermesse",
+        "description": "Create a new kermesse as an organizer",
+        "operationId": "createKermesse",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "kermesse",
+            "description": "Kermesse object to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/KermesseCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Kermesse created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/kermesses/{id}/complete": {
+      "patch": {
+        "tags": ["Kermesses"],
+        "summary": "Complete a kermesse",
+        "description": "Mark a kermesse as complete",
+        "operationId": "completeKermesse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the kermesse",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kermesse completed successfully"
+          },
+          "404": {
+            "description": "Kermesse not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/kermesses/{id}/add-user": {
+      "patch": {
+        "tags": ["Kermesses"],
+        "summary": "Assign a user to a kermesse",
+        "description": "Add a user to a kermesse",
+        "operationId": "assignUserToKermesse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the kermesse",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "user",
+            "description": "User details to assign to the kermesse",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserAssignmentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User assigned successfully"
+          },
+          "404": {
+            "description": "Kermesse or user not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/kermesses/{id}/add-stand": {
+      "patch": {
+        "tags": ["Kermesses"],
+        "summary": "Assign a stand to a kermesse",
+        "description": "Add a stand to a kermesse",
+        "operationId": "assignStandToKermesse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the kermesse",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "stand",
+            "description": "Stand details to assign to the kermesse",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StandAssignmentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stand assigned successfully"
+          },
+          "404": {
+            "description": "Kermesse or stand not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/participations": {
+      "get": {
+        "tags": ["Participations"],
+        "summary": "Get all participations",
+        "description": "Fetch a list of all participations",
+        "operationId": "getAllParticipations",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "A list of participations",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Participation"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/stands": {
+      "post": {
+        "tags": ["Stands"],
+        "summary": "Add a new stand",
+        "description": "Create a new stand",
+        "operationId": "addStand",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "stand",
+            "description": "Stand object to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StandCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Stand created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Stands"],
+        "summary": "Get all stands",
+        "description": "Fetch a list of all stands",
+        "operationId": "getAllStands",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "A list of stands",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Stand"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/stands/{id}": {
+      "get": {
+        "tags": ["Stands"],
+        "summary": "Get stand by ID",
+        "description": "Fetch details of a specific stand by ID",
+        "operationId": "getStandById",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the stand",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stand details",
+            "schema": {
+              "$ref": "#/definitions/Stand"
+            }
+          },
+          "404": {
+            "description": "Stand not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/stands/modify": {
+      "patch": {
+        "tags": ["Stands"],
+        "summary": "Modify a stand",
+        "description": "Update details of an existing stand",
+        "operationId": "modifyStand",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "stand",
+            "description": "Stand object with new details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StandModifyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stand updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Stand not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get all tickets",
+        "description": "Fetch a list of all tickets",
+        "operationId": "getAllTickets",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "A list of tickets",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Ticket"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tickets"],
+        "summary": "Create a new ticket",
+        "description": "Create a new ticket as a student",
+        "operationId": "createTicket",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "ticket",
+            "description": "Ticket object to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TicketCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ticket created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tombolas": {
+      "post": {
+        "tags": ["Tombolas"],
+        "summary": "Add a new tombola",
+        "description": "Create a new tombola as an organizer",
+        "operationId": "addTombola",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "tombola",
+            "description": "Tombola object to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TombolaCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Tombola created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tombolas/{id}": {
+      "patch": {
+        "tags": ["Tombolas"],
+        "summary": "Modify tombola",
+        "description": "Update details of an existing tombola",
+        "operationId": "modifyTombola",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the tombola",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "tombola",
+            "description": "Tombola object with new details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TombolaModifyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tombola updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Tombola not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tombolas/{id}/finish-winner": {
+      "patch": {
+        "tags": ["Tombolas"],
+        "summary": "Finish tombola and set winner",
+        "description": "Complete the tombola and declare a winner",
+        "operationId": "finishTombola",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the tombola",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tombola completed and winner declared"
+          },
+          "404": {
+            "description": "Tombola not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Kermesse": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "user_id": { "type": "integer" },
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["STARTED", "FINISHED"] },
+        "description": { "type": "string" }
+      }
+    },
+    "KermesseCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the kermesse" },
+        "description": { "type": "string", "description": "Description of the kermesse" }
+      },
+      "required": ["name"]
+    },
+    "UserAssignmentRequest": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "integer", "description": "ID of the user to assign" }
+      },
+      "required": ["user_id"]
+    },
+    "StandAssignmentRequest": {
+      "type": "object",
+      "properties": {
+        "stand_id": { "type": "integer", "description": "ID of the stand to assign" }
+      },
+      "required": ["stand_id"]
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "balance": { "type": "integer" },
+        "role": { "type": "string", "enum": ["PARENT", "STUDENT", "ORGANIZER", "STAND_HOLDER"] }
+      }
+    },
+    "UpdatePasswordRequest": {
+      "type": "object",
+      "properties": {
+        "password": { "type": "string", "description": "New password" }
+      }
+    },
+    "PaymentRequest": {
+      "type": "object",
+      "properties": {
+        "balance": { "type": "integer", "description": "Amount to be sent" },
+        "student_id": { "type": "integer", "description": "ID of the student receiving the jeton" }
+      }
+    },
+    "RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the user" },
+        "email": { "type": "string", "description": "Email of the user" },
+        "password": { "type": "string", "description": "Password" },
+        "role": { "type": "string", "enum": ["PARENT", "STUDENT", "ORGANIZER", "STAND_HOLDER"], "description": "Role of the user" }
+      },
+      "required": ["name", "email", "password", "role"]
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "User email" },
+        "password": { "type": "string", "description": "User password" }
+      },
+      "required": ["email", "password"]
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "token": { "type": "string" }
+      }
+    },
+    "Participation": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "kermesse_id": { "type": "integer" },
+        "stand_id": { "type": "integer" },
+        "user_id": { "type": "integer" },
+        "category": { "type": "string", "enum": ["FOOD", "GAME"] },
+        "balance": { "type": "integer" },
+        "point": { "type": "integer" },
+        "status": { "type": "string", "enum": ["STARTED", "FINISHED"] }
+      }
+    },
+    "Stand": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "user_id": { "type": "integer" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["FOOD", "GAME"] },
+        "stock": { "type": "integer" },
+        "price": { "type": "integer" },
+        "description": { "type": "string" }
+      }
+    },
+    "StandCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the stand" },
+        "category": { "type": "string", "enum": ["FOOD", "GAME"], "description": "Category of the stand" },
+        "stock": { "type": "integer", "description": "Stock available at the stand" },
+        "price": { "type": "integer", "description": "Price of the items or services at the stand" },
+        "description": { "type": "string", "description": "Description of the stand" }
+      },
+      "required": ["name", "category"]
+    },
+    "StandModifyRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the stand" },
+        "stock": { "type": "integer", "description": "Updated stock for the stand" },
+        "price": { "type": "integer", "description": "Updated price for the stand" },
+        "description": { "type": "string", "description": "Updated description for the stand" }
+      }
+    },
+    "Ticket": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "user_id": { "type": "integer" },
+        "tombola_id": { "type": "integer" },
+        "is_winner": { "type": "boolean" }
+      }
+    },
+    "TicketCreateRequest": {
+      "type": "object",
+      "properties": {
+        "tombola_id": { "type": "integer", "description": "ID of the tombola" }
+      },
+      "required": ["tombola_id"]
+    },
+    "TombolaCreateRequest": {
+      "type": "object",
+      "properties": {
+        "kermesse_id": { "type": "integer", "description": "ID of the kermesse" },
+        "name": { "type": "string", "description": "Name of the tombola" },
+        "prize": { "type": "string", "description": "Prize for the tombola" },
+        "price": { "type": "integer", "description": "Ticket price for the tombola" }
+      },
+      "required": ["kermesse_id", "name", "prize"]
+    },
+    "TombolaModifyRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the tombola" },
+        "prize": { "type": "string", "description": "Prize for the tombola" },
+        "price": { "type": "integer", "description": "Ticket price for the tombola" },
+        "status": { "type": "string", "enum": ["STARTED", "FINISHED"], "description": "Status of the tombola" }
+      }
+    }
+  }
+}

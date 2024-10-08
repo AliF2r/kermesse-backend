@@ -11,8 +11,10 @@ import (
 	"github.com/kermesse-backend/internal/tickets"
 	"github.com/kermesse-backend/internal/tombolas"
 	"github.com/kermesse-backend/internal/users"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
+	"os"
 )
 
 type APIServer struct {
@@ -64,6 +66,11 @@ func (s *APIServer) Start() error {
 	ticketService := tickets.NewTicketsService(ticketRepository, tombolaRepository, userRepository, kermesseRepository)
 	ticketHandler := handler.NewTicketsHandler(ticketService, userRepository)
 	ticketHandler.RegisterRoutes(router)
+
+	router.PathPrefix("/docs/swagger.json").Handler(http.StripPrefix("/docs", http.FileServer(http.Dir("./docs"))))
+	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL(os.Getenv("SWAGGER_URL")),
+	))
 
 	router.HandleFunc("/webhook", handler.HandleWebhook(userService)).Methods(http.MethodPost)
 
