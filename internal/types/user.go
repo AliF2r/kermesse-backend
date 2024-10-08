@@ -25,11 +25,12 @@ type User struct {
 }
 
 type UserBasic struct {
-	Id      int    `json:"id" db:"id"`
-	Name    string `json:"name" db:"name"`
-	Email   string `json:"email" db:"email"`
-	Balance int    `json:"balance" db:"balance"`
-	Role    string `json:"role" db:"role"`
+	Id         int    `json:"id" db:"id"`
+	Name       string `json:"name" db:"name"`
+	Email      string `json:"email" db:"email"`
+	Balance    int    `json:"balance" db:"balance"`
+	Role       string `json:"role" db:"role"`
+	TotalPoint int    `json:"total_point" db:"total_point"`
 }
 
 type UserWithAuthToken struct {

@@ -208,6 +208,11 @@ func (service *Service) AddParticipation(ctx context.Context, input map[string]i
 	input["balance"] = totalPrice
 	input["user_id"] = userId
 	input["category"] = stand.Category
+	if stand.Category == types.ParticipationTypeGame {
+		input["status"] = types.ParticipationStatusStarted
+	} else {
+		input["status"] = types.ParticipationStatusFinished
+	}
 
 	err = service.participationsRepository.AddParticipation(input)
 	if err != nil {

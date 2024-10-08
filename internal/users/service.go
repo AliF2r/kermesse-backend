@@ -51,12 +51,21 @@ func (service *Service) GetUserById(userID int) (types.UserBasic, error) {
 		}
 	}
 
+	totalPoint, err := service.usersRepository.getTotalPoints(userID)
+	if err != nil {
+		return types.UserBasic{}, errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
 	return types.UserBasic{
-		Id:      user.Id,
-		Name:    user.Name,
-		Email:   user.Email,
-		Role:    user.Role,
-		Balance: user.Balance,
+		Id:         user.Id,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Balance:    user.Balance,
+		TotalPoint: totalPoint,
 	}, nil
 }
 

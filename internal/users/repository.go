@@ -16,6 +16,7 @@ type UsersRepository interface {
 	AnyStandWithUserId(id int) (bool, error)
 	GetAllUsers(filters map[string]interface{}) ([]types.UserBasic, error)
 	GetAllStudentByParentId(id int, filters map[string]interface{}) ([]types.UserBasic, error)
+	getTotalPoints(userId int) (int, error)
 }
 
 type Repository struct {
@@ -32,6 +33,20 @@ func (repository *Repository) Create(newUser map[string]interface{}) error {
 	query := "INSERT INTO users (parent_id, name, email, password, role) VALUES ($1, $2, $3, $4, $5)"
 	_, err := repository.db.Exec(query, newUser["parent_id"], newUser["name"], newUser["email"], newUser["password"], newUser["role"])
 	return err
+}
+
+func (repository *Repository) getTotalPoints(userId int) (int, error) {
+	var totalPoints int
+	query := `
+		SELECT COALESCE(SUM(point), 0) 
+		FROM participations 
+		WHERE user_id = $1
+	`
+	err := repository.db.Get(&totalPoints, query, userId)
+	if err != nil {
+		return 0, err
+	}
+	return totalPoints, nil
 }
 
 func (repository *Repository) GetAllUsers(filters map[string]interface{}) ([]types.UserBasic, error) {

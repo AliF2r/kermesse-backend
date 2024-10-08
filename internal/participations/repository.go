@@ -105,8 +105,8 @@ func (repository *Repository) GetParticipationById(id int) (types.ParticipationC
 }
 
 func (repository *Repository) AddParticipation(input map[string]interface{}) error {
-	query := "INSERT INTO participations (user_id, kermesse_id, stand_id, category, balance) VALUES ($1, $2, $3, $4, $5)"
-	_, err := repository.db.Exec(query, input["user_id"], input["kermesse_id"], input["stand_id"], input["category"], input["balance"])
+	query := "INSERT INTO participations (user_id, kermesse_id, stand_id, category, balance, status) VALUES ($1, $2, $3, $4, $5, $6)"
+	_, err := repository.db.Exec(query, input["user_id"], input["kermesse_id"], input["stand_id"], input["category"], input["balance"], input["status"])
 
 	return err
 }
