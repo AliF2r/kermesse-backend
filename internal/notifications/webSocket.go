@@ -24,11 +24,9 @@ func UnregisterOrganizer(organizerId string) {
 }
 
 func NotifyOrganizer(organizerId, message string) {
-	fmt.Print("organizer: ", organizerId)
 	connMutex.Lock()
 	conn, ok := organizerConnections[organizerId]
 	connMutex.Unlock()
-	fmt.Print("organizerConnectionId: ", conn)
 	if ok {
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
 			fmt.Println("Write error:", err)
