@@ -65,6 +65,8 @@ func (s *APIServer) Start() error {
 	ticketHandler := handler.NewTicketsHandler(ticketService, userRepository)
 	ticketHandler.RegisterRoutes(router)
 
+	router.HandleFunc("/webhook", handler.HandleWebhook(userService)).Methods(http.MethodPost)
+
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{

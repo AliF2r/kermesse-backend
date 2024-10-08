@@ -16,7 +16,8 @@ type UsersRepository interface {
 	AnyStandWithUserId(id int) (bool, error)
 	GetAllUsers(filters map[string]interface{}) ([]types.UserBasic, error)
 	GetAllStudentByParentId(id int, filters map[string]interface{}) ([]types.UserBasic, error)
-	getTotalPoints(userId int) (int, error)
+	GetTotalPoints(userId int) (int, error)
+	ModifyBalanceFromStripe(id int, balance int) error
 }
 
 type Repository struct {
@@ -35,7 +36,7 @@ func (repository *Repository) Create(newUser map[string]interface{}) error {
 	return err
 }
 
-func (repository *Repository) getTotalPoints(userId int) (int, error) {
+func (repository *Repository) GetTotalPoints(userId int) (int, error) {
 	var totalPoints int
 	query := `
 		SELECT COALESCE(SUM(point), 0) 
@@ -47,6 +48,12 @@ func (repository *Repository) getTotalPoints(userId int) (int, error) {
 		return 0, err
 	}
 	return totalPoints, nil
+}
+
+func (repository *Repository) ModifyBalanceFromStripe(id int, balance int) error {
+	query := "UPDATE users SET balance=balance+$1 WHERE id=$2"
+	_, err := repository.db.Exec(query, balance, id)
+	return err
 }
 
 func (repository *Repository) GetAllUsers(filters map[string]interface{}) ([]types.UserBasic, error) {

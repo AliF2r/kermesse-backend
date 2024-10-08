@@ -24,6 +24,7 @@ type UsersService interface {
 	MakePayment(ctx context.Context, input map[string]interface{}) error
 	GetAllStudentByParentId(ctx context.Context, params map[string]interface{}) ([]types.UserBasic, error)
 	GetAllUsers(params map[string]interface{}) ([]types.UserBasic, error)
+	ModifyBalanceFromStripe(userId int, balance int) error
 }
 
 type Service struct {
@@ -34,6 +35,38 @@ func NewUsersService(usersRepository UsersRepository) *Service {
 	return &Service{
 		usersRepository: usersRepository,
 	}
+}
+
+func (service *Service) ModifyBalanceFromStripe(userId int, balance int) error {
+	user, err := service.usersRepository.GetUserById(userId)
+	if err != nil {
+		if goErrors.Is(err, sql.ErrNoRows) {
+			return errors.CustomError{
+				Key: errors.NotFound,
+				Err: err,
+			}
+		}
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+	if user.Role == types.UserRoleStudent {
+		return errors.CustomError{
+			Key: errors.Forbidden,
+			Err: goErrors.New("forbidden"),
+		}
+	}
+
+	err = service.usersRepository.ModifyBalanceFromStripe(userId, balance)
+	if err != nil {
+		return errors.CustomError{
+			Key: errors.InternalServerError,
+			Err: err,
+		}
+	}
+
+	return nil
 }
 
 func (service *Service) GetUserById(userID int) (types.UserBasic, error) {
@@ -51,7 +84,7 @@ func (service *Service) GetUserById(userID int) (types.UserBasic, error) {
 		}
 	}
 
-	totalPoint, err := service.usersRepository.getTotalPoints(userID)
+	totalPoint, err := service.usersRepository.GetTotalPoints(userID)
 	if err != nil {
 		return types.UserBasic{}, errors.CustomError{
 			Key: errors.InternalServerError,
