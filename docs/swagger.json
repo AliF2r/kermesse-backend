@@ -564,39 +564,6 @@
             "description": "Internal server error"
           }
         }
-      },
-      "post": {
-        "tags": ["Tickets"],
-        "summary": "Create a new ticket",
-        "description": "Create a new ticket as a student",
-        "operationId": "createTicket",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "ticket",
-            "description": "Ticket object to create",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/TicketCreateRequest"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ticket created successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
       }
     },
     "/tombolas": {
@@ -845,13 +812,6 @@
         "tombola_id": { "type": "integer" },
         "is_winner": { "type": "boolean" }
       }
-    },
-    "TicketCreateRequest": {
-      "type": "object",
-      "properties": {
-        "tombola_id": { "type": "integer", "description": "ID of the tombola" }
-      },
-      "required": ["tombola_id"]
     },
     "TombolaCreateRequest": {
       "type": "object",
