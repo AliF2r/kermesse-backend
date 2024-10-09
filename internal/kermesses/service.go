@@ -234,7 +234,15 @@ func (service *Service) MarkKermesseAsComplete(ctx context.Context, id int) erro
 	if err != nil || !canComplete {
 		return errors.CustomError{
 			Key: errors.BadRequest,
-			Err: goErrors.New("kermesse cannot be marked as complete because there is at least"),
+			Err: goErrors.New("kermesse cannot be marked as complete because there is at least one stand not finished"),
+		}
+	}
+
+	canCompleteForTombola, err := service.kermessesRepository.IsAllTombolaFinished(id)
+	if err != nil || !canCompleteForTombola {
+		return errors.CustomError{
+			Key: errors.BadRequest,
+			Err: goErrors.New("kermesse cannot be marked as complete because there is at least one tombola not finished"),
 		}
 	}
 
@@ -332,12 +340,6 @@ func (service *Service) AssignUserToKermesse(ctx context.Context, input map[stri
 	if student.ParentId != nil {
 		input["user_id"] = student.ParentId
 		err = service.kermessesRepository.LinkUserToKermesse(input)
-		if err != nil {
-			return errors.CustomError{
-				Key: errors.InternalServerError,
-				Err: err,
-			}
-		}
 	}
 
 	return nil

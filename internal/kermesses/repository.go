@@ -19,6 +19,7 @@ type KermessesRepository interface {
 	LinkUserToKermesse(input map[string]interface{}) error
 	GetUsersForInvitation(kermesseId int) ([]types.UserBasic, error)
 	getStatistics(id int, filters map[string]interface{}) (types.KermesseStatistics, error)
+	IsAllTombolaFinished(kermesseId int) (bool, error)
 }
 
 type Repository struct {
@@ -102,6 +103,21 @@ func (repository *Repository) IsStandLinkable(standId int) (bool, error) {
 	query := `SELECT EXISTS ( SELECT 1 FROM kermesses_stands ks JOIN kermesses k ON ks.kermesse_id = k.id WHERE ks.stand_id = $1 AND k.status = 'STARTED' ) AS is_linkable`
 	err := repository.db.QueryRow(query, standId).Scan(&canLink)
 	return !canLink, err
+}
+
+func (repository *Repository) IsAllTombolaFinished(kermesseId int) (bool, error) {
+	var allFinished bool
+	query := `
+        SELECT COUNT(*) = 0
+        FROM tombolas
+        WHERE kermesse_id = $1
+        AND status != 'FINISHED';
+    `
+	err := repository.db.QueryRow(query, kermesseId).Scan(&allFinished)
+	if err != nil {
+		return false, err
+	}
+	return allFinished, nil
 }
 
 func (repository *Repository) LinkStandToKermesse(input map[string]interface{}) error {
